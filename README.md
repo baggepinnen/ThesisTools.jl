@@ -4,7 +4,7 @@
 
 
 
-This Julia package contains some tools I wrote while writing my thesis.
+This Julia package contains some tools I wrote while writing my [thesis](https://lup.lub.lu.se/search/publication/ffb8dc85-ce12-4f75-8f2b-0881e492f6c0).
 
 # Functions
 ```julia
