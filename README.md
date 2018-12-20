@@ -4,6 +4,73 @@
 
 
 
+This Julia package contains some tools I wrote while writing my thesis.
+
+# Functions
+```julia
+"""
+    text, headings = process(filename, [sectionsplit::String])
+
+Reads a tex file and removes all tex-code to produce a clean output without environments or commands (thus, all figure captions will be removed). If the optinal `sectionsplit` is set, splits the string into a vector at the specified section level.
+`sectionsplit` ∈ ["part", "chapter", "section", "subsection"...]
+"""
+function process(filename, sectionsplit)
+```
+`process` is the main function, it takes your main tex file and compiles all text into a string by following `\include` and `\input` commands. It also detexes the string using the function `detex` below. If `sectionsplit` is provided, `text` will be a vector with, e.g., a string for each chapter/section etc.
+
+
+```julia
+"""
+    text = compile(filename)
+Return a string representing the tex-document. Follows \\input{} recursively.
+See `process` for a function doing everyting you want ;)
+"""
+compile(filename)
+```
+`compile` handles the compilation of many separate tex-files into one string.
+
+
+```julia
+"""
+outputtext = detex(inputtext)
+
+Removes preamble, environments and latex tags from the inputtext
+"""
+function detex(t)
+```
+`detex` tries to remove all texiness from the string. It removes `\commands`, `$math$` and `$$math$$`, `% comments`, and all **environments** such as `\begin{figure} ... \end{figure}` (this means that all captions are removed also :/ )
+
+```julia
+"""
+ϕ,θ,topics = categorize(crps, ntopics=8;
+    iters           = 2010,     # number of gibbs sampling iters in lda
+    α               = 1/ntopics,# hyper parameter topics per document
+    β               = 0.001,    # hyper parameter words per topic
+    words_per_topic = 30)
+
+See `lda` for more help on options.
+"""
+function categorize(crps, ntopics=8;
+    iters           = 2010,     # number of gibbs sampling iterss
+    α               = 1/ntopics,# hyper parameter topics per document
+    β               = 0.001,    # hyber parameter words per topic
+    words_per_topic = 30)
+```
+`categorize` performs LDA on the corpus `crps`, see the usage example below.
+
+```julia
+"""
+find_missing(filename, opening_char, closing_char)
+
+Locates missing brackets etc. in a Latex document.
+Example: `find_missing(thesis.tex, '{', '}')
+Does not work if opening and closing chars are the same, e.g., \$ \$
+"""
+function find_missing(filename, oc, cc)
+```
+
+
+
 # Example usage
 ```julia
 using ThesisTools, TextAnalysis

@@ -76,7 +76,6 @@ function detex(t)
     t = replace(t, "\\end{document}" => "")
     t = replace(t, "~" => " ")
     t = replace(t, r"(\$\$*).+?\1" => " ") # Removes $x$ $$x$$ math (.{1,300}? the ? makes the . match as few as possible
-    # t = remove_environments(t)
     t = replace(t, r"\\begin{([\w\*]+?)}.*?\\end{\1}"s => " ")
     t = replace(t, r"\\\w{1,15}\**{.{1,100}}{.{1,100}}" => " ") # Removes commands with double arguments
     t = replace(t, r"\\cmt\{.*?\}" => " ") # Removes comments
@@ -85,21 +84,6 @@ function detex(t)
     t = replace(t, r"\{|\}" => " ") # Removes leftover {}
     t
 end
-
-# function remove_environments(t)
-#     l = typemax(Int)
-#     while length(t) < l
-#         l = length(t)
-#         m = match(r"\\begin{([\w\*]+?)}", t) # Remove environments, removes captions =(
-#         if m != nothing
-#             m2 = match(Regex("\\\\end{$(m[1])}"), t)
-#             @assert m2 != nothing "Didn't find a match for $(m[1])"
-#             t = t[m2.offset+length(m.match):end]
-#         end
-#
-#     end
-#     t
-# end
 
 """
 embeddings, indices = word2vec(t)
