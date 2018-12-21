@@ -1,5 +1,7 @@
 module ThesisTools
-export compile, splitsection, process, detex, word2vec, gettitlewords, find_missing, categorize
+export compile, splitsection, process, detex, word2vec, gettitlewords, find_missing, categorize, each_texline
+
+include("findmissing.jl")
 
 # using Embeddings, Clustering
 # vocab2ind(vocab) = Dict(word=>ii for (ii,word) in enumerate(vocab))
@@ -9,26 +11,41 @@ export compile, splitsection, process, detex, word2vec, gettitlewords, find_miss
 using TextAnalysis, Test
 
 """
+    each_texline(f, filename)
+Tex-file iterator, call pattern:
+```
+each_texline(filename) do lineno,line,filename
+    do something
+end
+```
+"""
+function each_texline(f, filename)
+    inp = r"\\input{([\w_/]+.tex)}|\\include{([\w_/]+.tex)}"
+    for (lineno,line) in enumerate(eachline(filename, keep=true))
+        m = match(inp, line)
+        if m != nothing # Enter new file
+            each_texline(f, first_nonempty(m.captures))
+            continue
+        end
+        if isempty(line) || line[1] == '%'
+            continue
+        end
+        f(lineno,line,filename)
+    end
+end
+
+"""
     text = compile(filename)
 Return a string representing the tex-document. Follows \\input{} recursively.
 See `process` for a function doing everyting you want ;)
 """
-compile(filename) = String(take!(compile(filename, IOBuffer())))
-
-function compile(filename, io)
+function compile(filename)
+    io = IOBuffer()
     (filename[end-3:end] == ".tex")  || @warn "Provide a .tex file as input"
-    inp = r"\\input{([\w_/]+.tex)}|\\include{([\w_/]+.tex)}"
-    for line in eachline(filename, keep=true)
-        m = match(inp, line)
-        if m === nothing
-            if !isempty(line) && line[1] != '%'
-                write(io, line)
-            end
-        else # If there is more on the line, this is not printed
-            compile(first_nonempty(m.captures), io)
-        end
+    each_texline(filename) do lineno,line,filename
+        write(io, line)
     end
-    io
+    String(take!(io))
 end
 
 first_nonempty(x) = x[1] == nothing ? first_nonempty(@view(x[2:end])) : x[1]
@@ -48,7 +65,8 @@ function splitsection(text, sectionsplit)
 end
 
 """
-    text, headings = process(filename, [sectionsplit::String])
+    text           = process(filename)
+    text, headings = process(filename, sectionsplit::String)
 
 Reads a tex file and removes all tex-code to produce a clean output without environments or commands (thus, all figure captions will be removed). If the optinal `sectionsplit` is set, splits the string into a vector at the specified section level.
 `sectionsplit` ∈ ["part", "chapter", "section", "subsection"...]
@@ -201,5 +219,38 @@ function categorize(crps, ntopics=8;
 end
 
 
+rules = Function[]
+function find_common_errors(filename)
+    for rule in rules
+        rule(filename)
+    end
+end
+
+function matchall(r,t)
+    matches = RegexMatch[]
+    i = 1
+    while true
+        m = match(r,t,i)
+        if m === nothing
+            return matches
+        end
+        i = m.offset + sum(length,m.captures)
+        push!(matches, m)
+    end
+    matches
+end
+
+function rule_dash_or_not(filename)
+    t = process(filename)
+    dashed_matches = matchall(r"(\b\w{2,100}?)-(\w{4,100})", t)
+    each_texline(filename) do lineno,line,filename
+        for dashed_match in dashed_matches
+            m = match(Regex(dashed_match[1]*dashed_match[2]), line)
+            m === nothing && continue
+            @info("Found both $(dashed_match.match) and $(m.match) in $filename at line $lineno")
+        end
+    end
+end
+push!(rules, rule_dash_or_not)
 
 end # ThesisSummarizer

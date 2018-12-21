@@ -1,5 +1,4 @@
 
-
 """
 find_missing(filename, opening_char, closing_char)
 
@@ -10,32 +9,22 @@ Does not work if opening and closing chars are the same, e.g., \$ \$
 function find_missing(filename, oc::AbstractChar, cc::AbstractChar, opens = [])
     @assert oc != cc "I do not work with matching opening and closing characters"
     (filename[end-3:end] == ".tex")  || @warn "This function was implemented to operate on .tex files. I will try anyway..."
-    inp = r"\\input{([\w_/]+.tex)}"
     if !isempty(opens)
         @warn("Entering $filename with non-empty list of opened characters")
         @show opens
     end
-    for (lineno,line) in enumerate(eachline(filename))
-        m = match(inp, line)
-        if m != nothing # Enter new file
-            find_missing(m.captures[1], oc, cc, opens)
-            continue
-        end
-        if isempty(line) || line[1] == '%'
-            continue
-        end
+    each_texline(filename) do lineno,line,file
         for char in line
             if char == oc
-                push!(opens, (filename, lineno))
+                push!(opens, (file, lineno))
             elseif char == cc
                 if isempty(opens)
-                    @info("Unexpected closing character found", filename, lineno, line)
+                    @info("Unexpected closing character found", file, lineno, line)
                     @info("Continuing with a count of 0")
                 else
                     pop!(opens)
                 end
             end
-
         end
     end
     if !isempty(opens)
