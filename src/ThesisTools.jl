@@ -1,7 +1,8 @@
 module ThesisTools
-export compile, splitsection, process, detex, word2vec, gettitlewords, find_missing, categorize, each_texline
+export compile, splitsection, process, detex, word2vec, gettitlewords, find_missing, categorize, each_texline, wikiscan
 
 include("findmissing.jl")
+include("wikiscan.jl")
 
 # using Embeddings, Clustering
 # vocab2ind(vocab) = Dict(word=>ii for (ii,word) in enumerate(vocab))
@@ -40,11 +41,14 @@ Return a string representing the tex-document. Follows \\input{} recursively.
 See `process` for a function doing everyting you want ;)
 """
 function compile(filename)
+    path0 = pwd()
+    cd(dirname(filename))
     io = IOBuffer()
     (filename[end-3:end] == ".tex")  || @warn "Provide a .tex file as input"
     each_texline(filename) do lineno,line,filename
         write(io, line)
     end
+    cd(path0)
     String(take!(io))
 end
 
