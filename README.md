@@ -1,8 +1,5 @@
 # ThesisTools
 
-[![Build Status](https://travis-ci.com/baggepinnen/ThesisTools.jl.svg?branch=master)](https://travis-ci.com/baggepinnen/ThesisTools.jl)
-
-
 
 This Julia package contains some tools I wrote while writing my [thesis](https://lup.lub.lu.se/search/publication/ffb8dc85-ce12-4f75-8f2b-0881e492f6c0).
 
